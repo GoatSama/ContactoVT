@@ -1,0 +1,289 @@
+Archivo: index.php
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Formulario de Registro</title>
+</head>
+<body>
+    <h1>Formulario de Registro</h1>
+    <form action="guardar_registro.php" method="POST">
+        <label>Ejecutivo:</label>
+        <input type="text" name="ejecutivo" required><br><br>
+
+        <label>Nombres y Apellidos del Cliente:</label>
+        <input type="text" name="nombre_cliente" required><br><br>
+
+        <label>Tipo de Documento:</label>
+        <select name="tipo_documento" required>
+            <option value="DNI">DNI</option>
+            <option value="Carnet de Extranjería">Carnet de Extranjería</option>
+            <option value="Pasaporte">Pasaporte</option>
+        </select><br><br>
+
+        <label>Número de Documento:</label>
+        <input type="text" name="numero_documento" required><br><br>
+
+        <label>Línea de Crédito:</label>
+        <input type="text" name="linea_credito" required><br><br>
+
+        <label>Monto de Crédito:</label>
+        <input type="text" name="monto_credito" required><br><br>
+
+        <label>Teléfono:</label>
+        <input type="text" name="telefono" required><br><br>
+
+        <label>Email:</label>
+        <input type="email" name="email" required><br><br>
+
+        <input type="submit" value="Siguiente">
+    </form>
+    <br>
+    <a href="registros_anteriores.php">Ver Registros Anteriores</a>
+</body>
+</html>
+*********************************
+Archivo: guardar_registro.php
+<?php
+// Verificar si se han enviado todos los datos
+if (isset($_POST['ejecutivo'], $_POST['nombre_cliente'], $_POST['tipo_documento'], $_POST['numero_documento'], $_POST['linea_credito'], $_POST['monto_credito'], $_POST['telefono'], $_POST['email'])) {
+    // Conectar a la base de datos (reemplaza los valores con los de tu configuración)
+    $host = 'localhost';
+    $usuario = 'root';
+    $contrasena = '';
+    $base_datos = 'contactovt';
+
+    $conexion = mysqli_connect($host, $usuario, $contrasena, $base_datos);
+
+    if (!$conexion) {
+        die('Error al conectar a la base de datos: ' . mysqli_connect_error());
+    }
+
+    // Escapar los datos para evitar inyección de SQL
+    $ejecutivo = mysqli_real_escape_string($conexion, $_POST['ejecutivo']);
+    $nombre_cliente = mysqli_real_escape_string($conexion, $_POST['nombre_cliente']);
+    $tipo_documento = mysqli_real_escape_string($conexion, $_POST['tipo_documento']);
+    $numero_documento = mysqli_real_escape_string($conexion, $_POST['numero_documento']);
+    $linea_credito = mysqli_real_escape_string($conexion, $_POST['linea_credito']);
+    $monto_credito = mysqli_real_escape_string($conexion, $_POST['monto_credito']);
+    $    $telefono = mysqli_real_escape_string($conexion, $_POST['telefono']);
+    $email = mysqli_real_escape_string($conexion, $_POST['email']);
+
+    // Verificar si ya existe un registro con el mismo número de documento del cliente en la base de datos:
+    $consulta = "SELECT * FROM tabla_clientes WHERE numero_documento = '$numero_documento'";
+    $resultado = mysqli_query($conexion, $consulta);
+
+    if (mysqli_num_rows($resultado) > 0) {
+        // El cliente ya está registrado
+        echo "<script>alert('El cliente ya está registrado en la base de datos.');</script>";
+        echo "<button onclick=\"window.location.href='index.php'\">Volver al Index</button>";
+    } else {
+        // Insertar los datos en la tabla de clientes
+        $insercion = "INSERT INTO tabla_clientes (nombre_ejecutivo, nombre_cliente, tipo_documento, numero_documento, linea_credito, monto_credito, telefono, email) VALUES ('$ejecutivo', '$nombre_cliente', '$tipo_documento', '$numero_documento', '$linea_credito', '$monto_credito', '$telefono', '$email')";
+
+        if (mysqli_query($conexion, $insercion)) {
+            echo "Registro guardado exitosamente.";
+
+            // Abrir una nueva pestaña hacia otra página
+            echo "<script>window.open('otra_pagina.php', '_blank');</script>";
+        } else {
+            echo "Error al guardar el registro: " . mysqli_error($conexion);
+        }
+    }
+
+    // Cerrar la conexión a la base de datos
+    mysqli_close($conexion);
+} else {
+    // Redirigir al index.php si no se completaron todos los campos
+    header("Location: index.php");
+    exit;
+}
+**************************
+Archivo: otra_pagina.php
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Otra Página</title>
+</head>
+<body>
+    <h1>Otra Página</h1>
+    <p>Contenido de otra página...</p>
+</body>
+</html>
+**************************
+Archivo: registros_anteriores.php
+<?php
+// Conectar a la base de datos (reemplaza los valores con los de tu configuración)
+$host = 'localhost';
+$usuario = 'root';
+$contrasena = '';
+$base_datos = 'contactovt';
+
+$conexion = mysqli_connect($host, $usuario, $contrasena, $base_datos);
+
+if (!$conexion) {
+    die('Error al conectar a la base de datos: ' . mysqli_connect_error());
+}
+
+// Obtener registros anteriores de la tabla de clientes
+$consulta = "SELECT * FROM tabla_clientes";
+$resultado = mysqli_query($conexion, $consulta);
+
+if (mysqli_num_rows($resultado) > 0) {
+    echo "<h1>Registros Anteriores</h1>";
+    echo "<table>";
+    echo "<tr><th>ID</th><th>Ejecutivo</th><th>Nombre Cliente</th><th>Tipo Documento</th><th>Número Documento</th><th>Línea de Crédito</th><th>Monto de Crédito</th><th>Teléfono</th><th>Email</th></tr>";
+    
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+        echo "<tr>";
+        echo "<td>" . $fila['id'] . "</td>";
+        echo "<td>" . $fila['nombre_ejecutivo'] . "</td>";
+        echo "<td>" . $fila['nombre_cliente'] . "</td>";
+        echo "<td>" . $fila['tipo_documento'] . "</td>";
+        echo "<td>" . $fila['numero_documento'] . "</td>";
+        echo "<td>" . $fila['linea_credito'] . "</td>";
+        echo "<td>" . $fila['monto_credito'] . "</td>";
+        echo "<td>" . $fila['telefono'] . "</td>";
+        echo "<td>" . $fila['email'] . "</td>";
+        echo "</tr>";
+    }
+    
+    echo "</table>";
+} else {
+    echo "No se encontraron registros anteriores.";
+}
+
+// Cerrar la conexión a la base de datos
+mysqli_close($conexion);
+?>
+
+**************************************
+Aquí tienes el script para crear la tabla "tabla_clientes" en la base de datos "contactovt":
+
+sql
+Copy code
+CREATE DATABASE IF NOT EXISTS contactovt;
+
+USE contactovt;
+
+CREATE TABLE IF NOT EXISTS tabla_clientes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_ejecutivo VARCHAR(100) NOT NULL,
+    nombre_cliente VARCHAR(100) NOT NULL,
+    tipo_documento VARCHAR(50) NOT NULL,
+    numero_documento VARCHAR(50) NOT NULL,
+    linea_credito VARCHAR(50) NOT NULL,
+    monto_credito DECIMAL(10, 2) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx_numero_documento ON tabla_clientes (numero_documento);
+Este script crea una base de datos llamada "contactovt" y una tabla llamada "tabla_clientes" con los campos correspondientes. Además, se define un índice único en el campo "numero_documento" para evitar la inserción de datos duplicados de clientes.
+
+Recuerda que debes ejecutar este script en tu servidor de base de datos MySQL para crear la base de datos y la tabla necesarias para este proyecto. Asegúrate de proporcionar los detalles de conexión correctos en el código PHP para que se pueda establecer la conexión con la base de datos correctamente.
+
+***********
+
+Si deseas migrar fácilmente el proyecto a WordPress, puedes aprovechar las capacidades de WordPress para gestionar formularios y bases de datos. En lugar de crear una tabla personalizada en la base de datos, podemos utilizar la funcionalidad de los formularios de WordPress y el almacenamiento de datos en su base de datos.
+
+Aquí tienes un enfoque basado en WordPress:
+
+Crea un formulario personalizado utilizando el plugin "Contact Form 7" de WordPress. Este plugin te permite crear formularios de contacto personalizados con campos personalizados según tus necesidades. Puedes instalarlo desde el repositorio de plugins de WordPress.
+
+Configura el formulario en "Contact Form 7" para incluir los campos necesarios: nombres y apellidos del ejecutivo, nombres y apellidos del cliente, tipo y número de documento del cliente, línea de crédito del cliente, monto de crédito del cliente, teléfono del cliente y email del cliente.
+
+Una vez que hayas creado el formulario en "Contact Form 7", puedes utilizar el siguiente código PHP en tu tema de WordPress (archivo functions.php) para manejar el envío del formulario y guardar los datos en la base de datos de WordPress:
+
+php
+Copy code
+// Manejar el envío del formulario
+add_action('wpcf7_mail_sent', 'guardar_datos_formulario');
+
+function guardar_datos_formulario($cf7) {
+    // Obtener los datos del formulario
+    $submission = WPCF7_Submission::get_instance();
+    if ($submission) {
+        $form_data = $submission->get_posted_data();
+
+        // Extraer los datos del formulario
+        $ejecutivo = $form_data['ejecutivo'];
+        $nombre_cliente = $form_data['nombre_cliente'];
+        $tipo_documento = $form_data['tipo_documento'];
+        $numero_documento = $form_data['numero_documento'];
+        $linea_credito = $form_data['linea_credito'];
+        $monto_credito = $form_data['monto_credito'];
+        $telefono = $form_data['telefono'];
+        $email = $form_data['email'];
+
+        // Guardar los datos en la base de datos
+        global $wpdb;
+        $tabla_clientes = $wpdb->prefix . 'tabla_clientes'; // Reemplaza 'tabla_clientes' con el nombre que desees para tu tabla
+
+        $wpdb->insert(
+            $tabla_clientes,
+            array(
+                'nombre_ejecutivo' => $ejecutivo,
+                'nombre_cliente' => $nombre_cliente,
+                'tipo_documento' => $tipo_documento,
+                'numero_documento' => $numero_documento,
+                'linea_credito' => $linea_credito,
+                'monto_credito' => $monto_credito,
+                'telefono' => $telefono,
+                'email' => $email
+            )
+        );
+    }
+}
+Para mostrar los registros anteriores en una página, puedes crear una nueva página en WordPress y utilizar el siguiente código PHP en el editor de contenido de la página:
+php
+Copy code
+<?php
+// Obtener los registros anteriores de la base de datos
+global $wpdb;
+$tabla_clientes = $wpdb->prefix . 'tabla_clientes'; // Reemplaza 'tabla_clientes' con el nombre que has elegido para tu tabla
+
+$registros = $wpdb->get_results("SELECT * FROM $tabla_clientes");
+
+if ($registros) {
+    echo '<h1>Registros Anteriores</h1>';
+    echo '<table>';
+    echo '<tr><th>ID</th><th>Ejecutivo</th><th>Nombre
+
+
+
+
+richarthm51@hotmail.com
+continua
+
+php
+Copy code
+// Continuación del código anterior
+
+// Cliente</th><th>Tipo Documento</th><th>Número Documento</th><th>Línea Crédito</th><th>Monto Crédito</th><th>Teléfono</th><th>Email</th></tr>';
+
+    foreach ($registros as $registro) {
+        echo '<tr>';
+        echo '<td>' . $registro->id . '</td>';
+        echo '<td>' . $registro->nombre_ejecutivo . '</td>';
+        echo '<td>' . $registro->nombre_cliente . '</td>';
+        echo '<td>' . $registro->tipo_documento . '</td>';
+        echo '<td>' . $registro->numero_documento . '</td>';
+        echo '<td>' . $registro->linea_credito . '</td>';
+        echo '<td>' . $registro->monto_credito . '</td>';
+        echo '<td>' . $registro->telefono . '</td>';
+        echo '<td>' . $registro->email . '</td>';
+        echo '</tr>';
+    }
+
+    echo '</table>';
+} else {
+    echo 'No se encontraron registros anteriores.';
+}
+?>
+Este código se encarga de obtener los registros anteriores de la tabla personalizada en la base de datos de WordPress y mostrarlos en una tabla en la página. Asegúrate de reemplazar 'tabla_clientes' con el nombre que hayas elegido para tu tabla.
+
+Recuerda que para que este enfoque funcione, debes tener WordPress instalado y activado en tu servidor. Además, es posible que necesites ajustar el código para que se adapte a tu estructura y nombres de campos específicos.
+
+¡Espero que esto te ayude a migrar tu proyecto a WordPress de manera más sencilla!
